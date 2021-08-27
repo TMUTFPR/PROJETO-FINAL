@@ -122,6 +122,8 @@ wrx:    LDR R11, [R0, #UART_FR] ; status da UART
         
 calcular_resultado:
         PUSH {LR}
+        PUSH {R7}
+        MOV R7, #0
         //R10 contém o primeiro valor. R6 contém o segundo valor ainda não adaptado
         CMP R5, #1
         ITT EQ
@@ -140,7 +142,7 @@ calcular_resultado:
         
         CMP R4, #'-'
         IT EQ
-        SUBEQ R1, R6, R9
+        SUBEQ R1, R9, R6
         
         CMP R4, #'*'
         IT EQ
@@ -149,6 +151,10 @@ calcular_resultado:
         CMP R4, #'/'
         IT EQ
         UDIVEQ R1, R6, R9
+        
+        CMP R1, #0
+        IT LT
+        BLLT imprime_menos
         
         //faz divisões sucessivas por 100000, 10000, 1000, 100 e 10 para exibir na tela o valor em ASCii
         MOV R2, R1
@@ -191,12 +197,36 @@ wait2:  LDR R2, [R0, #UART_FR]
         MOV R5, #0
         MOV R6, #0
         
+        POP {R7}
+        POP {PC}
+        
+imprime_menos:
+        PUSH {LR}
+        PUSH {R1}
+        
+        MOV R1, #'-'
+        SUB R1, #0x30
+        BL escreve
+        
+        POP {R1}
+        
+        PUSH {R2}
+        MOV R2, #-1
+        MUL R1, R2
+        POP {R2}
+        
         POP {PC}
 
 mostra_resultado:
         PUSH {LR}
         UDIV R1, R2, R3
-        BL escreve
+        CMP R1, #0
+        IT NE
+        MOVNE R7, #1
+        
+        CMP R7, #1
+        IT EQ
+        BLEQ escreve
         MUL R1, R1, R3
         SUB R1, R2, R1
         
